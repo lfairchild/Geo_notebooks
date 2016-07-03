@@ -13,11 +13,20 @@ def find_nearest(array,value):
     idx = (np.abs(array-value)).argmin()
     return array[idx]
 
+def find_nearest_latlon(array, value):
+    idx = np.sum(np.abs(array-value), axis=1).argmin()
+    return array[idx]
+
 def find_len_coor(elevation_profile, lat, lon):
     #profile is a pandas dataframe of cross section elevation
-    lat_ind = elevation_profile.loc[elevation_profile['lat']==find_nearest(elevation_profile['lat'],lat)].index.tolist()[0]
-    lon_ind = elevation_profile.ix[elevation_profile['lon']==find_nearest(elevation_profile['lon'], lon)].index.tolist()[0]
-    ind_avg = int((lat_ind+lon_ind)/2)
+    latlon_list = np.array(list(zip(elevation_profile.lat.tolist(), elevation_profile.lon.tolist())))
+    latlon_found = find_nearest_latlon(latlon_list, (lat, lon))
+    # lat = latlon_found[0]
+    # lon = latlon_found[1]
+    ind_avg = elevation_profile.loc[elevation_profile['lat']==latlon_found[0]].loc[elevation_profile['lon']==latlon_found[1]].index.tolist()[0]
+    # lat_ind = elevation_profile.loc[elevation_profile['lat']==find_nearest(elevation_profile['lat'],lat)].index.tolist()[0]
+    # lon_ind = elevation_profile.ix[elevation_profile['lon']==find_nearest(elevation_profile['lon'], lon)].index.tolist()[0]
+    # ind_avg = int((lat_ind+lon_ind)/2)
     #print(ind_avg)
     return elevation_profile['length'][ind_avg], elevation_profile['elevation'][ind_avg]
 
@@ -31,10 +40,18 @@ def calc_cs_trend(profile):
     cs_trend = np.rad2deg(cs_trend_rad)
     return cs_trend
 
+def calc_dip_trend_diff(trend, dip_d):
+    new_trend = trend%360
+    if abs(new_trend-dip_d)>abs((new_trend-180)-dip_d):
+        return abs((new_trend-180)-dip_d)
+    else:
+        return abs(new_trend-dip_d)
+
 def calc_structures(path_to_str, profile):
     #input path to structural data CSV with columns 'lat', 'lon', 'strike' and 'dip'
+    # optional 'id' column to label with site/measurement name
     structures = pd.read_csv(str(path_to_str),
-                         usecols=['strike', 'dip', 'lon', 'lat'])
+                         usecols=['id', 'strike', 'dip', 'lon', 'lat'])
     structures['elevation']= pd.Series()
     structures['dip_d']= pd.Series()
     structures['length']= pd.Series()
@@ -58,9 +75,17 @@ def calc_structures(path_to_str, profile):
 
     return structures
 
-def cs_figure(profile, structures, min_length=0, max_length=3000,
-              ymin=150, ylim = 300, extrap_range = 300, contacts=None,
-              locations=None, save=False, save_name='cross_section.pdf'):
+def cs_figure(profile, structures, min_length=None, max_length=None,
+              ymin=None, ylim = None, extrap_range = 300, contacts=None,
+              locations=None, id_measurements = False, save=False, save_name='cross_section.pdf'):
+    if min_length is None:
+        min_length = int(min(profile.length.tolist()))
+    if max_length is None:
+        max_length = int(max(profile.length.tolist()))
+    if ymin is None:
+        ymin = int(min(profile.elevation.tolist())*0.5)
+    if ylim is None:
+        ylim = int(max(profile.elevation.tolist())*1.3)
     min_ind = profile.loc[profile['length']==find_nearest(np.array(profile.length.tolist()),min_length)].index.tolist()[0]
     med_ind = profile.loc[profile['length']==find_nearest(np.array(profile.length.tolist()),(max_length)/2)].index.tolist()[0]
     max_ind = profile.loc[profile['length']==find_nearest(np.array(profile.length.tolist()),max_length)].index.tolist()[0]
@@ -71,11 +96,19 @@ def cs_figure(profile, structures, min_length=0, max_length=3000,
     med_cs_lon = profile['lon'][med_ind]
     max_cs_lon = profile['lon'][max_ind]
 
+    if locations:
+        loc_coor = {}
+        for location in locations:
+            loc_mid = np.average([locations[location][0], locations[location][1]])
+            loc_ind = profile.loc[profile['length']==find_nearest(np.array(profile.length.tolist()),loc_mid)].index.tolist()[0]
+            loc_lat = profile['lat'][loc_ind]
+            loc_lon = profile['lon'][loc_ind]
+            loc_coor[location] = [loc_lat, loc_lon]
+
     plt.figure(figsize=(12,8))
     ax1 = plt.subplot2grid((2,3), (0,0), colspan=1)
     m = Basemap(projection='merc',llcrnrlat=46.2,urcrnrlat=48,llcrnrlon=-91,
                 urcrnrlon=-88, resolution='i') #lat_ts=-25
-    # m = Basemap(projection='merc', resolution='i',area_thresh = 0.1) #lat_ts=-25
     m.drawrivers(color='#99ffff')
     m.drawcoastlines()
     m.drawmapboundary(fill_color='#99ffff')
@@ -85,7 +118,7 @@ def cs_figure(profile, structures, min_length=0, max_length=3000,
     meridians = [min_cs_lon]#np.arange(0.,360.,2.)
     m.drawmeridians(meridians,labels=[0,0,0,1],fontsize=10)
     X, Y = m([min_cs_lon, max_cs_lon, max_cs_lon, min_cs_lon], [max_cs_lat,max_cs_lat,min_cs_lat, min_cs_lat])
-    m.plot(X,Y, color='k', markersize=300,zorder=1e10)
+    m.plot(X,Y, color='k', markersize=300)
 
     ax2 = plt.subplot2grid((2,3), (0,1), colspan=1)
     zoom_rescale = abs(0.5*(max(profile.length)/111100))
@@ -102,7 +135,12 @@ def cs_figure(profile, structures, min_length=0, max_length=3000,
     m.drawmeridians(meridians,labels=[0,0,0,1],fontsize=10)
     X, Y = m([profile['lon'][min_ind], profile['lon'][max_ind]],
              [profile['lat'][min_ind], profile['lat'][max_ind]])
-    m.plot(X, Y, linewidth=5, zorder=1e10)
+    m.plot(X, Y, linestyle='dotted', linewidth=2, zorder=50)
+    if locations:
+        for location in locations:
+            X, Y = m(loc_coor[location][1], loc_coor[location][0])
+            m.scatter(X,Y, label=location, color='r', zorder=51)
+    plt.legend()
 
     ax3 = plt.subplot2grid((2,3), (0,2), colspan=1)
     ax3.plot(profile.length.tolist(),
@@ -119,8 +157,6 @@ def cs_figure(profile, structures, min_length=0, max_length=3000,
 
     ax4 = plt.subplot2grid((2,3), (1, 0), colspan=3)
     plt.plot(profile.length.tolist(), profile.elevation.tolist())
-    # x_linspace = np.linspace(min(MP_profile.length.tolist()), max(MP_profile.length.tolist()))
-    # for n in range(len(structures)):
     contact_strat = {}
     strat=0
     structures = structures.loc[structures['length']>=min_length].loc[structures['length']<=max_length]
@@ -133,11 +169,14 @@ def cs_figure(profile, structures, min_length=0, max_length=3000,
                 sep=structures['length'][n]-structures['length'][n-1]
             else:
                 sep=0
-            # for x in range(1):#,240,sep):
-        #         plt.plot(x_linspace+(x*np.sin(np.deg2rad(abs(structures['coor_dip'][n])))), y, 'r')
             plt.plot(x_linspace, y, 'r')
+            if id_measurements==True:
+                site_name = str(structures['id'][n])
+                plt.text(x_linspace[0], y[0], site_name,
+                        bbox=dict(facecolor='white', edgecolor='white'), horizontalalignment='center')
+            dip_d_angle = calc_dip_trend_diff(calc_cs_trend(profile),structures['dip_d'][n])
             extrap_strat = strat
-            strat += sep*np.sin(np.deg2rad(abs(structures['corr_dip'][n])))
+            strat += sep*np.cos(np.deg2rad(dip_d_angle))*np.sin(np.deg2rad(abs(structures['dip'][n])))
             lab_height = 30 + (n * 10)%60
             plt.text(structures['length'][n], max(y)+lab_height, '{0}'.format(int(strat)), horizontalalignment='center')
             plt.vlines(structures['length'][n], structures['elevation'][n], max(y)+lab_height-4, linestyles='dotted')
@@ -188,9 +227,10 @@ def cs_figure(profile, structures, min_length=0, max_length=3000,
         for contact in contacts:
             xline = float(contacts[contact])
             ymax = profile.loc[profile['length']==find_nearest(profile['length'], xline)]['elevation']
-            plt.vlines(xline,0,float(ymax),colors='g', linewidth=3.0, linestyles='dotted', label=contact)
-            plt.text(xline, ymax+70, '{0}'.format(int(contact_strat[contact])), color='g',horizontalalignment='center')
-            plt.vlines(xline, ymax, ymax+65, linestyles='dotted')
+            plt.vlines(xline,0,float(ymax),colors=np.random.rand(3), linewidth=3.0, linestyles='dotted', label=contact)
+            y_place = np.random.randint(ymax+0.1*(ylim-ymin),ylim-0.1*(ylim-ymin))
+            plt.text(xline, y_place+5, '{0}'.format(int(contact_strat[contact])), color='g',horizontalalignment='center')
+            plt.vlines(xline, ymax, y_place, linestyles='dotted')
     if locations:
         for location in locations:
             y_rng = []
