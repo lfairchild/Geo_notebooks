@@ -13,8 +13,17 @@ def find_nearest(array,value):
     idx = (np.abs(array-value)).argmin()
     return array[idx]
 
-def find_nearest_latlon(array, value):
-    idx = np.sum(np.abs(array-value), axis=1).argmin()
+def find_nearest_latlon(array, values):
+    lat1 = values[0]
+    c=[]
+    for z in array:
+        lat_diff = np.abs(z[0]-values[0])
+        lon_diff = np.abs(z[1]-values[1])
+        lat2 = z[0]
+        a = (np.sin(np.deg2rad(lat_diff)/2)**2)+np.cos(np.deg2rad(lat1))*np.cos(np.deg2rad(lat2))*(np.sin(np.deg2rad(lon_diff)/2)**2)
+        c.append(2*np.arctan2(np.sqrt(a), np.sqrt(1-a)))
+    idx = np.array(c).argmin()
+    # idx = np.sum(np.abs(array-value), axis=1).argmin()
     return array[idx]
 
 def find_len_coor(elevation_profile, lat, lon):
@@ -50,8 +59,12 @@ def calc_dip_trend_diff(trend, dip_d):
 def calc_structures(path_to_str, profile):
     #input path to structural data CSV with columns 'lat', 'lon', 'strike' and 'dip'
     # optional 'id' column to label with site/measurement name
-    structures = pd.read_csv(str(path_to_str),
-                         usecols=['id', 'strike', 'dip', 'lon', 'lat'])
+    try:
+        structures = pd.read_csv(str(path_to_str),
+                             usecols=['id', 'strike', 'dip', 'lon', 'lat'])
+    except:
+        structures = pd.read_csv(str(path_to_str),
+                             usecols=['strike', 'dip', 'lon', 'lat'])
     structures['elevation']= pd.Series()
     structures['dip_d']= pd.Series()
     structures['length']= pd.Series()
@@ -117,8 +130,8 @@ def cs_figure(profile, structures, min_length=None, max_length=None,
     m.drawparallels(parallels,labels=[1,0,0,0],fontsize=10)
     meridians = [min_cs_lon]#np.arange(0.,360.,2.)
     m.drawmeridians(meridians,labels=[0,0,0,1],fontsize=10)
-    X, Y = m([min_cs_lon, max_cs_lon, max_cs_lon, min_cs_lon], [max_cs_lat,max_cs_lat,min_cs_lat, min_cs_lat])
-    m.plot(X,Y, color='k', markersize=300)
+    X, Y = m([min_cs_lon, max_cs_lon, max_cs_lon, min_cs_lon,min_cs_lon], [max_cs_lat,max_cs_lat,min_cs_lat, min_cs_lat,max_cs_lat])
+    m.plot(X,Y, color='k', markersize=300,zorder=50)
 
     ax2 = plt.subplot2grid((2,3), (0,1), colspan=1)
     zoom_rescale = abs(0.5*(max(profile.length)/111100))
@@ -153,6 +166,7 @@ def cs_figure(profile, structures, min_length=None, max_length=None,
                                         profile.lon.tolist()[len(profile)-1]),
              transform=ax3.transAxes,
              bbox=dict(facecolor='white', edgecolor='white'), zorder=50)
+    plt.xlim(min(profile.length), max(profile.length))
     plt.tight_layout()
 
     ax4 = plt.subplot2grid((2,3), (1, 0), colspan=3)
@@ -177,7 +191,7 @@ def cs_figure(profile, structures, min_length=None, max_length=None,
             dip_d_angle = calc_dip_trend_diff(calc_cs_trend(profile),structures['dip_d'][n])
             extrap_strat = strat
             strat += sep*np.cos(np.deg2rad(dip_d_angle))*np.sin(np.deg2rad(abs(structures['dip'][n])))
-            lab_height = 30 + (n * 10)%60
+            lab_height = (ylim-max(y))*(0.1+0.1*(n%6))#(30 + (n * 10)%60)*
             plt.text(structures['length'][n], max(y)+lab_height, '{0}'.format(int(strat)), horizontalalignment='center')
             plt.vlines(structures['length'][n], structures['elevation'][n], max(y)+lab_height-4, linestyles='dotted')
             if contacts:
@@ -189,7 +203,7 @@ def cs_figure(profile, structures, min_length=None, max_length=None,
             if n>0 and n<len(structures)-1:
                 if structures['length'][n]-structures['length'][n-1]>extrap_range:
                     for extrap in range(int(structures['length'][n-1])+extrap_range, int(structures['length'][n]), extrap_range):
-                        extrap_strat += extrap_range*np.sin(np.deg2rad(abs(structures['corr_dip'][n-1])))
+                        extrap_strat += extrap_range*np.cos(np.deg2rad(dip_d_angle))*np.sin(np.deg2rad(abs(structures['dip'][n-1])))
                         text_height = 30 + (extrap * 10)%60
                         plt.text(extrap,
                                  profile.loc[profile['length']==find_nearest(profile['length'], extrap)]['elevation']+text_height,
@@ -202,7 +216,7 @@ def cs_figure(profile, structures, min_length=None, max_length=None,
                 if max_length-structures['length'][n]>extrap_range:
                     extrap_strat = strat
                     for extrap in range(int(structures['length'][n])+extrap_range, max_length, extrap_range):
-                        extrap_strat += extrap_range*np.sin(np.deg2rad(abs(structures['corr_dip'][n])))
+                        extrap_strat += extrap_range*np.cos(np.deg2rad(dip_d_angle))*np.sin(np.deg2rad(abs(structures['dip'][n])))
                         text_height = 30 + (extrap * 10)%60
                         plt.text(extrap,
                                  profile.loc[profile['length']==find_nearest(profile['length'], extrap)]['elevation']+text_height,
@@ -211,10 +225,12 @@ def cs_figure(profile, structures, min_length=None, max_length=None,
                                    profile.loc[profile['length']==find_nearest(profile['length'], extrap)]['elevation'],
                                    profile.loc[profile['length']==find_nearest(profile['length'], extrap)]['elevation']+text_height-5,
                                    linestyles='dotted')
+                extrap=int(max(profile.length))
+                total_strat = extrap_strat + extrap_range*np.cos(np.deg2rad(dip_d_angle))*np.sin(np.deg2rad(abs(structures['dip'][n])))
             elif n==0:
                 if structures['length'][n]>extrap_range:
                     for extrap in range(int(min(structures.length))-extrap_range, min_length, -extrap_range):
-                        extrap_strat += -extrap_range*np.sin(np.deg2rad(abs(structures['corr_dip'][0])))
+                        extrap_strat += -extrap_range*np.cos(np.deg2rad(dip_d_angle))*np.sin(np.deg2rad(abs(structures['dip'][0])))
                         text_height = 30 + (extrap * 10)%60
                         plt.text(extrap,
                                  profile.loc[profile['length']==find_nearest(profile['length'], extrap)]['elevation']+text_height,
@@ -243,10 +259,12 @@ def cs_figure(profile, structures, min_length=None, max_length=None,
 
     ax4.text(0, 1, '{:.5}\n{:.5}'.format(profile['lat'][min_ind],
                                          profile['lon'][min_ind]),
-             color='r', transform=ax4.transAxes, bbox=dict(facecolor='white', edgecolor='white'), zorder=50)
+             color='r', transform=ax4.transAxes,
+             bbox=dict(facecolor='white', edgecolor='white'), verticalalignment='top',zorder=50)
     ax4.text(1, 1, '{:.5}\n{:.5}'.format(profile['lat'][max_ind],
                                          profile['lon'][max_ind]),
-             color='r', transform=ax4.transAxes, bbox=dict(facecolor='white', edgecolor='white'), zorder=50)
+             color='r', transform=ax4.transAxes,
+             bbox=dict(facecolor='white', edgecolor='white'), verticalalignment='top', zorder=50)
 
     plt.xlabel('meters')
     plt.ylabel('meters')
@@ -254,7 +272,7 @@ def cs_figure(profile, structures, min_length=None, max_length=None,
     plt.xlim(min_length,max_length)
     plt.ylim(ymin,ylim)
 
-    plt.title('Bearing = {:.4}°'.format(calc_cs_trend(profile)))
+    plt.title('Bearing = {:.4}°, Total Strat = {:.4} km'.format(calc_cs_trend(profile), total_strat/1000))
 
     if save==True:
         plt.savefig(str(save_name))
