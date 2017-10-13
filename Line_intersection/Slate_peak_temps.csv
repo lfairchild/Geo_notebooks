@@ -1,0 +1,40 @@
+Site,Lithology,Impact direction Peak Temp,HT Lower Bound in sites W/O impact direction,HT Lower Bound in sites WITH impact direction,Site Latitude,Site Longitude,impact_dir?,site_dec,site_inc,site_alpha95,site_k,site_n,site_n_lines,site_r,site_comp_name,Notes
+DeI3,basaltic dike,,300,,48.69377,-86.98657,n,,,,,,,,,impact direction not present
+MI1,basaltic dike,300,,350,48.68557,-87.02888,y,35.3,57.9,8.4,34,10,10,9.7343,MT1,
+MI2,basaltic dike,525,,,48.68116,-87.0216,y,105.4,56.1,12,26,7,7,6.7715,HT1,"HT near impact direction, near breccia dike?"
+McI1,basaltic dike,325,,350,48.66639,-87.014,y,106.3,49.5,15.7,13,8,8,7.4759,MT1,
+PI1,basaltic dike,325,,350,48.65229,-87.0073,y,99.9,75.1,7.7,77,6,6,5.9353,MT1,
+PI3,basaltic dike,275,,450,48.634069,-87.0348,y,69,45.1,9.1,33,9,9,8.7588,MT1,
+PI4,basaltic dike,275,,300,48.64446,-87.00859,y,63.5,57.2,22.7,8,7,7,6.2529,MT1,
+PI6,basaltic dike,350,,500,48.64016,-87.02009,y,94.7,28.1,10.3,44,6,6,5.8855,MT1,
+PI7,basaltic dike,,,,48.62576,-86.99717,n,,,,,,,,,"inconsistent pmag data, cannot properly evaluate site"
+PI14,basaltic dike,300,,350,48.62924,-87.02806,y,28.4,60.7,3.8,407,5,5,4.9902,MT1,
+PI17,basaltic dike,350,,500,48.66075,-87.00741,y,35.4,68.1,4.2,173,8,8,7.9595,MT1,
+PI18,basaltic dike,350,,450,48.65787,-87.00995,y,98.7,63.1,10.8,52,5,5,4.9225,MT1,
+PI20,basaltic dike,350,,525,48.66238,-87.01626,y,47.4,68.5,5.5,70,11,11,10.8567,MT1,
+PI2b,lava flow,300,,325,48.64648,-87.05714,y,87.2,66.7,13.2,27,6,6,5.813,MT,HT is similar to impact direction however there is an additional deflection in direction between the impact direction and the HT
+PI8,lava flow,275,,400,48.63946,-87.05516,y,90.7,40.4,11.6,35,6,6,5.8553,MT,
+PI9,lava flow,275,,325,48.63946,-87.05516,y,89.3,49.5,9,56,6,6,5.9113,MT,
+PI10,lava flow,275,,400,48.63946,-87.05516,y,91.9,37,16.1,34,4,4,3.911,MT,
+PI11,lava flow,275,,350,48.63946,-87.05516,y,82.6,48.7,5.8,173,5,5,4.9768,MT,
+PI12,lava flow,300,,400,48.63946,-87.05516,y,96.3,39.4,6,101,7,7,6.9407,MT,
+PI13,lava flow,300,,400,48.63946,-87.05516,y,104.5,34.5,16.6,17,6,6,5.7103,MT,
+BI1,basaltic dike,375,,475,48.676834,-87.002975,y,74.8,51.5,5.9,90,8,8,7.9224,MT,
+PI23,basaltic dike,,100,,48.66488,-86.96163,n,,,,,,,,,impact direction not present
+PI25,basaltic dike,,150,,48.64828,-86.95587,n,,,,,,,,,impact direction not present
+PI27,basaltic dike,580,,,48.64677,-86.95636,y,94.9,39.3,15,13,9,9,8.3738,HT,"HT near impact direction, near breccia dike?"
+PI28,basaltic dike,550,,,48.64164,-86.9591,y,78,68,10.9,72,4,4,3.9583,HT,"HT near impact direction, near breccia dike?"
+PI29,basaltic dike,325,,400,48.63671,-86.957936,y,78,37.6,12.8,23,7,7,6.7403,MT,
+PI30,basaltic dike,350,,500,48.63646,-86.95557,y,99.1,36.5,7.9,51,8,8,7.8616,MT,
+PI43,basaltic dike,580,,,48.65198,-87.0576219,y,93.7,47.5,14.7,9,13,13,11.6496,HT,"HT near impact direction, near breccia dike?"
+PI45,basaltic dike,275,,315,48.65549,-87.04467,y,73.5,72.8,4.8,92,11,11,10.8917,LT,HT is similar to impact direction however there is an additional deflection in direction between the impact direction and the HT
+PI32,lava flow,300,,425,48.6425,-87.057408,y,76.5,49.8,6.4,77,8,8,7.9087,MT,
+PI33,lava flow,325,,400,48.6425,-87.057408,y,67.1,48.1,20,16,5,5,4.7434,MT,
+PI34,lava flow,570,,,48.6425,-87.057408,y,53.3,76.3,8.5,44,8,8,7.8406,MT,"HT near impact direction, near breccia dike?"
+PI35,lava flow,300,,400,48.6425,-87.057408,y,70.6,56.7,19.3,13,6,6,5.6172,MT,
+PI36,lava flow,325,,350,48.6425,-87.057408,y,78.6,37.2,21.7,7,8,8,7.0658,MT,
+PI37,lava flow,,300,,48.6425,-87.057408,n,,,,,,,,,impact direction not present
+PI38,lava flow,250,,300,48.6425,-87.057408,y,119.9,62.6,15.4,26,5,5,4.8444,MT,
+PI39,lava flow,,400,,48.6425,-87.057408,n,,,,,,,,,impact direction not present
+PI40,lava flow,550,,,48.6425,-87.057408,y,84.4,53,5.8,93,8,8,7.9249,HT,"HT near impact direction, near breccia dike?"
+PI41,lava flow,300,,400,48.6425,-87.057408,y,95,44.7,6.2,71,9,9,8.8866,MT,
